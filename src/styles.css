@@ -640,7 +640,7 @@ h1 {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: auto minmax(64px, auto) 1fr;
+  grid-template-columns: auto minmax(58px, auto) auto 1fr;
   align-items: center;
   gap: 8px;
   min-height: 38px;
@@ -662,6 +662,14 @@ h1 {
   color: var(--ink);
   font-size: 1.14rem;
   text-align: right;
+}
+
+.timer-mode {
+  padding: 3px 6px;
+  border: 1px solid rgba(210, 230, 250, 0.14);
+  color: var(--metal);
+  font-size: 0.66rem;
+  font-weight: 950;
 }
 
 .timer-panel.is-time-up {

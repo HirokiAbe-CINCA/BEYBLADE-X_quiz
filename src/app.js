@@ -12,9 +12,14 @@ import {
   isFirstPlaceScore,
   saveLeaderboardEntry,
 } from './ranking.js';
+import {
+  EXPERT_TIME_LIMIT_SECONDS,
+  EXPERT_TIME_START_SCORE,
+  getQuestionTimeLimitSeconds,
+  INITIAL_TIME_LIMIT_SECONDS,
+} from './timerRules.js';
 
 const OPTIONS_PER_QUESTION = 4;
-const QUESTION_TIME_LIMIT_SECONDS = 10;
 const app = document.querySelector('#app');
 
 let quiz = null;
@@ -54,7 +59,7 @@ function renderStart() {
         </div>
         <div>
           <dt><ruby>制限<rt aria-hidden="true">せいげん</rt></ruby></dt>
-          <dd>${QUESTION_TIME_LIMIT_SECONDS}<span>秒</span></dd>
+          <dd>${INITIAL_TIME_LIMIT_SECONDS}<span>→${EXPERT_TIME_LIMIT_SECONDS}秒</span></dd>
         </div>
         <div>
           <dt><ruby>記録<rt aria-hidden="true">きろく</rt></ruby></dt>
@@ -193,16 +198,19 @@ function getAnswerClass(question, optionId) {
 }
 
 function renderTimer(question) {
+  const timeLimitSeconds = getQuestionTimeLimitSeconds(quiz);
   const timerText = question.isTimedOut
     ? '<ruby>時間切れ<rt aria-hidden="true">じかんぎれ</rt></ruby>'
     : question.selectedId
       ? 'ストップ'
-      : `${QUESTION_TIME_LIMIT_SECONDS}<ruby>秒<rt aria-hidden="true">びょう</rt></ruby>`;
+      : `${timeLimitSeconds}<ruby>秒<rt aria-hidden="true">びょう</rt></ruby>`;
+  const timerMode = quiz.score >= EXPERT_TIME_START_SCORE ? 'EXPERT' : `${EXPERT_TIME_START_SCORE}問後5秒`;
 
   return `
     <div class="timer-panel${question.isTimedOut ? ' is-time-up' : ''}" aria-live="polite">
       <span><ruby>残<rt aria-hidden="true">のこ</rt></ruby>り</span>
       <strong data-timer-text>${timerText}</strong>
+      <span class="timer-mode">${timerMode}</span>
       <div class="timer-track" aria-hidden="true">
         <span data-timer-bar style="width: ${question.selectedId ? 0 : 100}%"></span>
       </div>
@@ -392,7 +400,7 @@ function renderError(error) {
 }
 
 function startQuestionTimer() {
-  timerDeadline = Date.now() + QUESTION_TIME_LIMIT_SECONDS * 1000;
+  timerDeadline = Date.now() + getQuestionTimeLimitSeconds(quiz) * 1000;
   updateQuestionTimer();
   timerInterval = window.setInterval(updateQuestionTimer, 100);
 }
@@ -404,7 +412,7 @@ function updateQuestionTimer() {
     return;
   }
 
-  const duration = QUESTION_TIME_LIMIT_SECONDS * 1000;
+  const duration = getQuestionTimeLimitSeconds(quiz) * 1000;
   const remaining = Math.max(0, timerDeadline - Date.now());
   const seconds = Math.ceil(remaining / 1000);
   const percentage = Math.max(0, Math.min(100, (remaining / duration) * 100));
