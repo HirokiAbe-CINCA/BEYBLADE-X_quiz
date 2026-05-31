@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a local, mobile-first browser quiz where players identify BEYBLADE X blades, ratchets, and bits from official part images, with 10-second timed questions.
+**Goal:** Build a local, mobile-first browser quiz where players identify BEYBLADE X blades, ratchets, and bits from official part images, with 10-second timed questions that switch to 5 seconds after 10 correct answers.
 
 **Architecture:** Use a dependency-free static app. Keep quiz state in pure JavaScript modules so it can be tested with Node's built-in test runner, and keep DOM rendering isolated in `src/app.js`.
 
@@ -27,7 +27,7 @@
 - Create: `package.json`
 - Create: `test/quizEngine.test.mjs`
 
-- [ ] Write tests for question generation, same-category answer choices, passing score, double-answer prevention, timed-out answers, and official part-image URL validation.
+- [ ] Write tests for streak question generation, same-category answer choices, double-answer prevention, timed-out answers, and official part-image URL validation.
 - [ ] Run `npm test` and confirm the suite fails because `src/quizEngine.js` and `src/beyblades.js` do not exist yet.
 
 ### Task 2: Quiz Data And Engine
@@ -37,7 +37,7 @@
 - Create: `src/quizEngine.js`
 
 - [ ] Add official BEYBLADE X blade, ratchet, and bit data items, including 30+ blade varieties.
-- [ ] Implement seeded shuffling, 10-question challenge creation with every part category included, 4-answer option generation, answer recording, timeout recording, and result calculation.
+- [ ] Implement seeded shuffling, unlimited streak challenge creation with every part category available, 4-answer option generation, answer recording, timeout recording, and result calculation.
 - [ ] Run `npm test` and confirm all logic tests pass.
 
 ### Task 3: Browser UI
@@ -48,7 +48,7 @@
 - Create: `src/styles.css`
 
 - [ ] Build start, question, feedback, and result screens with official-site-inspired dark X-line styling.
-- [ ] Add a 10-second countdown timer with visual pressure and automatic time-up feedback.
+- [ ] Add a 10-second countdown timer that switches to 5 seconds after 10 correct answers, with visual pressure and automatic time-up feedback.
 - [ ] Add ruby annotations for difficult UI kanji.
 - [ ] Make touch targets large, layout stable, and image area responsive for mobile.
 - [ ] Show a graceful image fallback message if a remote official image fails to load.

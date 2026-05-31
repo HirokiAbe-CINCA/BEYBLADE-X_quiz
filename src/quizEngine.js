@@ -1,39 +1,8 @@
-export const DEFAULT_QUIZ_OPTIONS = {
-  questionCount: 10,
-  optionsPerQuestion: 4,
-  passingScore: 7,
-};
-
 export const DEFAULT_STREAK_OPTIONS = {
   optionsPerQuestion: 4,
 };
 
 export const TIMEOUT_SELECTED_ID = '__timeout__';
-
-export function createQuiz(items, options = {}) {
-  const settings = {
-    ...DEFAULT_QUIZ_OPTIONS,
-    seed: String(Date.now()),
-    ...options,
-  };
-
-  validateQuizInputs(items, settings);
-
-  const random = createSeededRandom(settings.seed);
-  const questionItems = selectQuestionItems(items, settings, random);
-  const questions = questionItems.map((answer, index) => {
-    return createQuestion(answer, items, random, index + 1, settings.optionsPerQuestion);
-  });
-
-  return {
-    currentIndex: 0,
-    passingScore: settings.passingScore,
-    questionCount: settings.questionCount,
-    questions,
-    score: 0,
-    status: 'playing',
-  };
-}
 
 export function createStreakQuiz(items, options = {}) {
   const settings = {
@@ -59,48 +28,6 @@ export function createStreakQuiz(items, options = {}) {
   };
 
   return buildNextStreakQuestion(quiz);
-}
-
-function selectQuestionItems(items, settings, random) {
-  const typeGroups = groupItemsByType(items);
-  const typeNames = [...typeGroups.keys()];
-
-  if (typeNames.length <= 1 || typeNames.length > settings.questionCount) {
-    return shuffle(items, random).slice(0, settings.questionCount);
-  }
-
-  const selected = [];
-  const selectedIds = new Set();
-
-  for (const type of shuffle(typeNames, random)) {
-    const [item] = shuffle(typeGroups.get(type), random);
-    selected.push(item);
-    selectedIds.add(item.id);
-  }
-
-  const remaining = shuffle(
-    items.filter((item) => !selectedIds.has(item.id)),
-    random,
-  ).slice(0, settings.questionCount - selected.length);
-
-  return shuffle([...selected, ...remaining], random);
-}
-
-function groupItemsByType(items) {
-  const groups = new Map();
-
-  for (const item of items) {
-    if (!item.type) {
-      continue;
-    }
-
-    if (!groups.has(item.type)) {
-      groups.set(item.type, []);
-    }
-    groups.get(item.type).push(item);
-  }
-
-  return groups;
 }
 
 function createQuestion(answer, items, random, questionNumber, optionsPerQuestion) {
@@ -155,11 +82,7 @@ function getDistractorCandidates(items, answer) {
 }
 
 export function getCurrentQuestion(quiz) {
-  if (quiz.mode === 'streak') {
-    return quiz.questions[0] ?? null;
-  }
-
-  return quiz.questions[quiz.currentIndex] ?? null;
+  return quiz.questions[0] ?? null;
 }
 
 export function answerCurrentQuestion(quiz, selectedId) {
@@ -175,8 +98,7 @@ export function answerCurrentQuestion(quiz, selectedId) {
 
   const isCorrect = selectedId === currentQuestion.answer.id;
   const questions = quiz.questions.map((question, index) => {
-    const isCurrent = quiz.mode === 'streak' ? index === 0 : index === quiz.currentIndex;
-    if (!isCurrent) {
+    if (index !== 0) {
       return question;
     }
 
@@ -187,22 +109,11 @@ export function answerCurrentQuestion(quiz, selectedId) {
     };
   });
 
-  if (quiz.mode === 'streak') {
-    return {
-      ...quiz,
-      questions,
-      score: quiz.score + (isCorrect ? 1 : 0),
-      status: isCorrect ? 'answered' : 'complete',
-    };
-  }
-
-  const isLastQuestion = quiz.currentIndex === quiz.questions.length - 1;
-
   return {
     ...quiz,
     questions,
     score: quiz.score + (isCorrect ? 1 : 0),
-    status: isLastQuestion ? 'complete' : 'answered',
+    status: isCorrect ? 'answered' : 'complete',
   };
 }
 
@@ -214,8 +125,7 @@ export function timeOutCurrentQuestion(quiz) {
   }
 
   const questions = quiz.questions.map((question, index) => {
-    const isCurrent = quiz.mode === 'streak' ? index === 0 : index === quiz.currentIndex;
-    if (!isCurrent) {
+    if (index !== 0) {
       return question;
     }
 
@@ -227,12 +137,10 @@ export function timeOutCurrentQuestion(quiz) {
     };
   });
 
-  const isLastQuestion = quiz.currentIndex === quiz.questions.length - 1;
-
   return {
     ...quiz,
     questions,
-    status: quiz.mode === 'streak' || isLastQuestion ? 'complete' : 'answered',
+    status: 'complete',
   };
 }
 
@@ -246,46 +154,18 @@ export function advanceQuestion(quiz) {
     return quiz;
   }
 
-  if (quiz.mode === 'streak') {
-    if (!currentQuestion.isCorrect) {
-      return quiz;
-    }
-
-    return buildNextStreakQuestion(quiz);
+  if (!currentQuestion.isCorrect) {
+    return quiz;
   }
 
-  const nextIndex = quiz.currentIndex + 1;
-  if (nextIndex >= quiz.questions.length) {
-    return {
-      ...quiz,
-      status: 'complete',
-    };
-  }
-
-  return {
-    ...quiz,
-    currentIndex: nextIndex,
-    status: 'playing',
-  };
+  return buildNextStreakQuestion(quiz);
 }
 
 export function getQuizResult(quiz) {
-  if (quiz.mode === 'streak') {
-    return {
-      answeredCount: quiz.score + (quiz.status === 'complete' ? 1 : 0),
-      score: quiz.score,
-      streak: quiz.score,
-    };
-  }
-
-  const answeredCount = quiz.questions.filter((question) => question.selectedId).length;
-
   return {
-    answeredCount,
-    passed: answeredCount === quiz.questionCount && quiz.score >= quiz.passingScore,
-    passingScore: quiz.passingScore,
-    questionCount: quiz.questionCount,
+    answeredCount: quiz.score + (quiz.status === 'complete' ? 1 : 0),
     score: quiz.score,
+    streak: quiz.score,
   };
 }
 
@@ -305,37 +185,6 @@ function validateStreakInputs(items, settings) {
   }
 
   validateTypeCounts(items, settings.optionsPerQuestion);
-}
-
-function validateQuizInputs(items, settings) {
-  if (!Array.isArray(items)) {
-    throw new TypeError('Quiz items must be an array.');
-  }
-
-  assertPositiveInteger('questionCount', settings.questionCount);
-  assertPositiveInteger('optionsPerQuestion', settings.optionsPerQuestion);
-  assertPositiveInteger('passingScore', settings.passingScore);
-
-  if (settings.optionsPerQuestion < 2) {
-    throw new RangeError('optionsPerQuestion must be at least 2.');
-  }
-
-  if (settings.passingScore > settings.questionCount) {
-    throw new RangeError('passingScore cannot be greater than questionCount.');
-  }
-
-  if (items.length < settings.questionCount) {
-    throw new RangeError(`Need at least ${settings.questionCount} quiz items.`);
-  }
-
-  if (items.length < settings.optionsPerQuestion) {
-    throw new RangeError(`Need at least ${settings.optionsPerQuestion} quiz items.`);
-  }
-
-  const typedItems = items.filter((item) => item.type);
-  if (typedItems.length > 0) {
-    validateTypeCounts(items, settings.optionsPerQuestion);
-  }
 }
 
 function validateTypeCounts(items, optionsPerQuestion) {
