@@ -53,21 +53,36 @@ test('新ベイからblade/ratchet/bitの3アイテムが生成される（辞�
   assert.equal(bit.name, 'GN（ギヤニードル）');
 });
 
-test('辞書に無いビットは登録されず保留＋辞書追加の通知対象（UX-13 ゴーレムロック1-60UN）', () => {
+test('辞書に無いビットは登録されず保留＋辞書追加の通知対象', () => {
+  const entries = [
+    // 架空の未知ビットZZ（実在ビットは辞書追加され次第このテストの対象外になるため架空にする）
+    { code: 'UX-96', name: 'テストロック1-60ZZ', category: 'ブースター', slug: 'ux96.html' },
+  ];
+  const { candidates, skipped, dictionaryMissing } = buildCandidates(CURRENT, entries);
+
+  // ブレードとラチェットは登録、ビットZZは保留
+  assert.deepEqual(
+    candidates.map((c) => `${c.item.type}:${c.item.name}`).sort(),
+    ['blade:テストロック', 'ratchet:1-60'],
+  );
+  assert.equal(skipped.length, 1);
+  assert.equal(skipped[0].code, 'UX-96');
+  assert.match(skipped[0].reason, /辞書に未登録のため保留/);
+  assert.deepEqual(dictionaryMissing, ['ZZ']);
+});
+
+test('辞書登録済みビットUN（アンダーニードル）は自動登録される（UX-13 ゴーレムロック1-60UN）', () => {
   const entries = [
     { code: 'UX-13', name: 'ゴーレムロック1-60UN', category: 'ブースター', slug: 'ux13.html' },
   ];
   const { candidates, skipped, dictionaryMissing } = buildCandidates(CURRENT, entries);
 
-  // ブレードとラチェットは登録、ビットUNは保留
   assert.deepEqual(
     candidates.map((c) => `${c.item.type}:${c.item.name}`).sort(),
-    ['blade:ゴーレムロック', 'ratchet:1-60'],
+    ['bit:UN（アンダーニードル）', 'blade:ゴーレムロック', 'ratchet:1-60'],
   );
-  assert.equal(skipped.length, 1);
-  assert.equal(skipped[0].code, 'UX-13');
-  assert.match(skipped[0].reason, /辞書に未登録のため保留/);
-  assert.deepEqual(dictionaryMissing, ['UN']);
+  assert.equal(skipped.length, 0);
+  assert.deepEqual(dictionaryMissing, []);
 });
 
 test('CX系の新商品はブレードのみ登録、ラチェット・ビットはcx-parts-holdで保留', () => {
