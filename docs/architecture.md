@@ -66,7 +66,7 @@ Firestore: `sessions/{id}` = `{startedAt, used}` / `scores/{id}` = `{name, score
 
 ```js
 export const CONFIG = {
-  apiBaseUrl: '',   // 空 = 全国ランキング無効（ローカルのみで動作）
+  apiBaseUrl: '',   // 空 = 全国ランキング無効（クイズ本体は動作を継続）
   dataUrl: '',      // 空 = 同梱 data/beyblades.json のみ使用
 };
 ```

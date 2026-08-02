@@ -14,17 +14,10 @@ import {
   getQuizResult,
   timeOutCurrentQuestion,
 } from './quizEngine.js';
+import { MAX_NAME_LENGTH } from './ranking.js';
 import {
-  getLeaderboard,
-  isFirstPlaceScore,
-  MAX_NAME_LENGTH,
-  saveLeaderboardEntry,
-} from './ranking.js';
-import {
-  EXPERT_TIME_LIMIT_SECONDS,
   EXPERT_TIME_START_SCORE,
   getQuestionTimeLimitSeconds,
-  INITIAL_TIME_LIMIT_SECONDS,
 } from './timerRules.js';
 
 const OPTIONS_PER_QUESTION = 4;
@@ -35,7 +28,6 @@ let quizData = null;
 let timerDeadline = 0;
 let timerInterval = null;
 let sessionPromise = null;
-let rankingTab = isGlobalRankingEnabled(CONFIG) ? 'global' : 'local';
 let globalRankingState = { status: 'idle', entries: [] };
 
 bootstrap();
@@ -98,20 +90,6 @@ function renderStart() {
         <img class="start-art-ratchet" src="${escapeHtml(quizData.ratchets[0].imageUrl)}" alt="">
         <img class="start-art-bit" src="${escapeHtml(quizData.bits[0].imageUrl)}" alt="">
       </div>
-      <dl class="start-rules" aria-label="チャレンジルール">
-        <div>
-          <dt>モード</dt>
-          <dd>∞<span>まで</span></dd>
-        </div>
-        <div>
-          <dt><ruby>制限<rt aria-hidden="true">せいげん</rt></ruby></dt>
-          <dd>${INITIAL_TIME_LIMIT_SECONDS}<span>→${EXPERT_TIME_LIMIT_SECONDS}秒</span></dd>
-        </div>
-        <div>
-          <dt><ruby>記録<rt aria-hidden="true">きろく</rt></ruby></dt>
-          <dd>TOP<span>1</span></dd>
-        </div>
-      </dl>
       ${renderRankingPanel()}
       <button class="primary-action" type="button" data-start>
         START
@@ -125,7 +103,7 @@ function renderStart() {
   `;
 
   app.querySelector('[data-start]').addEventListener('click', startGame);
-  wireRankingTabs();
+  wireRankingPanel();
 }
 
 function startGame() {
@@ -355,10 +333,8 @@ function renderResult() {
   clearQuestionTimer();
 
   const result = getQuizResult(quiz);
-  const leaderboard = getLeaderboard();
   const canSaveScore = result.score > 0;
   const resultClass = canSaveScore ? 'passed' : 'failed';
-  const headline = isFirstPlaceScore(result.score, leaderboard) ? 'NEW RECORD' : 'GAME OVER';
   const message = canSaveScore
     ? `${result.score}問れんぞく正解！`
     : 'まずは1問正解をねらおう。';
@@ -366,13 +342,13 @@ function renderResult() {
   app.innerHTML = `
     <section class="result-screen ${resultClass}">
       <p class="eyebrow"><ruby>記録<rt aria-hidden="true">きろく</rt></ruby></p>
-      <h1>${headline}</h1>
+      <h1>GAME OVER</h1>
       <div class="result-score">
         <span>${result.score}</span>
         <small><ruby>問<rt aria-hidden="true">もん</rt></ruby>れんぞく</small>
       </div>
       <p>${message}</p>
-      ${canSaveScore ? renderNameEntryForm(result.score) : renderLeaderboard(leaderboard)}
+      ${canSaveScore ? renderNameEntryForm(result.score) : ''}
       <button class="primary-action" type="button" data-restart>もう一回</button>
     </section>
   `;
@@ -398,10 +374,9 @@ async function handleScoreSubmit(form, score) {
 
   setFormBusy(form, true);
 
-  const updatedLeaderboard = saveLeaderboardEntry(localStorage, { name, score });
   const globalResult = await sendGlobalScore({ name, score });
 
-  renderSavedRanking(updatedLeaderboard, globalResult);
+  renderRankingResult(globalResult);
 }
 
 async function sendGlobalScore({ name, score }) {
@@ -443,13 +418,17 @@ function setFormBusy(form, isBusy) {
   }
 }
 
-function renderSavedRanking(leaderboard, globalResult = { enabled: false, rank: null, failed: false }) {
+function renderRankingResult(globalResult = { enabled: false, rank: null, failed: true }) {
+  const saved = globalResult.enabled && !globalResult.failed;
+
   app.innerHTML = `
-    <section class="result-screen passed">
-      <p class="eyebrow">RANKING SAVED</p>
-      <h1><ruby>保存<rt aria-hidden="true">ほぞん</rt></ruby>したよ</h1>
+    <section class="result-screen ${saved ? 'passed' : 'failed'}">
+      <p class="eyebrow">${saved ? 'RANKING SAVED' : 'SEND FAILED'}</p>
+      <h1>${saved
+        ? '<ruby>保存<rt aria-hidden="true">ほぞん</rt></ruby>したよ'
+        : '<ruby>送信<rt aria-hidden="true">そうしん</rt></ruby>できなかったよ'}</h1>
       ${renderGlobalResultNote(globalResult)}
-      ${renderLeaderboard(leaderboard)}
+      ${saved ? renderRankingPanel() : ''}
       <button class="primary-action" type="button" data-restart>もう一回</button>
       <button class="secondary-action" type="button" data-title><ruby>タイトル<rt aria-hidden="true">たいとる</rt></ruby>へ</button>
     </section>
@@ -457,17 +436,24 @@ function renderSavedRanking(leaderboard, globalResult = { enabled: false, rank: 
 
   app.querySelector('[data-restart]').addEventListener('click', startGame);
   app.querySelector('[data-title]').addEventListener('click', renderStart);
+  if (saved) {
+    wireRankingPanel();
+  }
 }
 
 function renderGlobalResultNote(globalResult) {
   if (!globalResult?.enabled) {
-    return '';
+    return `
+      <p class="global-note is-failed">
+        <ruby>全国<rt aria-hidden="true">ぜんこく</rt></ruby>ランキングは、いま<ruby>利用<rt aria-hidden="true">りよう</rt></ruby>できないよ。
+      </p>
+    `;
   }
 
   if (globalResult.failed) {
     return `
       <p class="global-note is-failed">
-        <ruby>全国<rt aria-hidden="true">ぜんこく</rt></ruby>ランキングにつながらないよ。この<ruby>端末<rt aria-hidden="true">たんまつ</rt></ruby>には<ruby>保存<rt aria-hidden="true">ほぞん</rt></ruby>できたよ。
+        <ruby>全国<rt aria-hidden="true">ぜんこく</rt></ruby>ランキングに<ruby>送信<rt aria-hidden="true">そうしん</rt></ruby>できなかったよ。つうしんかんきょうをたしかめてね。
       </p>
     `;
   }
@@ -499,17 +485,22 @@ function renderNameEntryForm(score) {
 
 function renderRankingPanel() {
   if (!isGlobalRankingEnabled(CONFIG)) {
-    return renderLeaderboard(getLeaderboard());
+    return `
+      <section class="leaderboard" aria-label="全国ランキング">
+        <div class="leaderboard-head">
+          <p class="eyebrow">RANKING</p>
+          <span>NATIONAL TOP 30</span>
+        </div>
+        <p class="ranking-status is-error">ぜんこくランキングは、いまりようできないよ。</p>
+      </section>
+    `;
   }
 
   return `
-    <section class="leaderboard has-tabs" aria-label="ランキング" data-ranking-panel>
+    <section class="leaderboard" aria-label="全国ランキング" data-ranking-panel>
       <div class="leaderboard-head">
         <p class="eyebrow">RANKING</p>
-        <div class="ranking-tabs" role="tablist">
-          <button class="ranking-tab${rankingTab === 'global' ? ' is-active' : ''}" type="button" role="tab" aria-selected="${rankingTab === 'global'}" data-ranking-tab="global">ぜんこく</button>
-          <button class="ranking-tab${rankingTab === 'local' ? ' is-active' : ''}" type="button" role="tab" aria-selected="${rankingTab === 'local'}" data-ranking-tab="local">このたんまつ</button>
-        </div>
+        <span>NATIONAL TOP 30</span>
       </div>
       <div data-ranking-body>${renderRankingBody()}</div>
     </section>
@@ -517,31 +508,15 @@ function renderRankingPanel() {
 }
 
 function renderRankingBody() {
-  if (rankingTab === 'local') {
-    return `
-      <p class="ranking-caption">LOCAL TOP 5</p>
-      ${renderRankingList(getLeaderboard())}
-    `;
-  }
-
   if (globalRankingState.status === 'loading') {
-    return `
-      <p class="ranking-caption">NATIONAL TOP 30</p>
-      <p class="ranking-status">よみこみちゅう…</p>
-    `;
+    return '<p class="ranking-status">よみこみちゅう…</p>';
   }
 
   if (globalRankingState.status === 'error') {
-    return `
-      <p class="ranking-caption">NATIONAL TOP 30</p>
-      <p class="ranking-status is-error">つながらないよ。あとでもういちどためしてね。</p>
-    `;
+    return '<p class="ranking-status is-error">つながらないよ。あとでもういちどためしてね。</p>';
   }
 
-  return `
-    <p class="ranking-caption">NATIONAL TOP 30</p>
-    ${renderRankingList(globalRankingState.entries)}
-  `;
+  return renderRankingList(globalRankingState.entries);
 }
 
 function renderRankingList(entries) {
@@ -558,37 +533,19 @@ function renderRankingList(entries) {
   return `<ol>${rows}</ol>`;
 }
 
-function wireRankingTabs() {
+function wireRankingPanel() {
   const panel = app.querySelector('[data-ranking-panel]');
   if (!panel) {
     return;
   }
 
-  for (const button of panel.querySelectorAll('[data-ranking-tab]')) {
-    button.addEventListener('click', () => {
-      rankingTab = button.dataset.rankingTab;
-      updateRankingPanel();
-      if (rankingTab === 'global') {
-        ensureGlobalRanking();
-      }
-    });
-  }
-
-  if (rankingTab === 'global') {
-    ensureGlobalRanking();
-  }
+  ensureGlobalRanking();
 }
 
 function updateRankingPanel() {
   const panel = app.querySelector('[data-ranking-panel]');
   if (!panel) {
     return;
-  }
-
-  for (const button of panel.querySelectorAll('[data-ranking-tab]')) {
-    const isActive = button.dataset.rankingTab === rankingTab;
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-selected', String(isActive));
   }
 
   const body = panel.querySelector('[data-ranking-body]');
@@ -611,18 +568,6 @@ async function ensureGlobalRanking() {
     : { status: 'error', entries: [] };
 
   updateRankingPanel();
-}
-
-function renderLeaderboard(leaderboard) {
-  return `
-    <section class="leaderboard" aria-label="ランキング">
-      <div class="leaderboard-head">
-        <p class="eyebrow">RANKING</p>
-        <span>LOCAL TOP 5</span>
-      </div>
-      ${renderRankingList(leaderboard)}
-    </section>
-  `;
 }
 
 function renderError(error) {

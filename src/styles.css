@@ -284,43 +284,6 @@ h1 {
   line-height: 1.6;
 }
 
-.start-rules {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin: 0;
-}
-
-.start-rules div {
-  min-height: 66px;
-  padding: 9px 8px;
-  border: 1px solid rgba(210, 230, 250, 0.14);
-  background: rgba(255, 255, 255, 0.045);
-}
-
-.start-rules dt {
-  margin: 0 0 4px;
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 900;
-}
-
-.start-rules dd {
-  margin: 0;
-  color: #ffffff;
-  font-size: 1.5rem;
-  font-weight: 1000;
-  line-height: 1;
-}
-
-.start-rules dd span {
-  margin-left: 2px;
-  color: var(--metal);
-  font-size: 0.74rem;
-}
-
 .leaderboard {
   position: relative;
   z-index: 1;
@@ -1254,54 +1217,13 @@ figcaption {
   }
 }
 
-/* ---- ランキングのタブ切替（ぜんこく / このたんまつ） ---- */
-.leaderboard.has-tabs .leaderboard-head {
-  flex-wrap: wrap;
-}
-
-.ranking-tabs {
-  display: flex;
-  gap: 6px;
-}
-
-.ranking-tab {
-  min-height: 30px;
-  padding: 4px 12px;
-  border: 1px solid rgba(210, 230, 250, 0.18);
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.24);
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 950;
-  cursor: pointer;
-  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
-}
-
-.ranking-tab.is-active {
-  border-color: rgba(103, 234, 255, 0.5);
-  background: linear-gradient(90deg, rgba(103, 234, 255, 0.2), rgba(255, 255, 255, 0.04));
-  color: #ffffff;
-}
-
-.ranking-tab:focus-visible {
-  outline: 3px solid var(--cyan);
-  outline-offset: 2px;
-}
-
+/* ---- 全国ランキング ---- */
 [data-ranking-body] {
   display: grid;
   gap: 8px;
 }
 
-.ranking-caption {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.66rem;
-  font-weight: 950;
-  letter-spacing: 0.08em;
-}
-
-.leaderboard.has-tabs ol {
+[data-ranking-body] ol {
   max-height: 268px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
