@@ -118,12 +118,20 @@ gcloud firestore fields ttls update expireAt \
 
 # GET /api/ranking の二段ソート(score降順→date昇順)に必要な複合インデックス。
 # 未作成だとランキング取得がFAILED_PRECONDITIONで失敗する。
-gcloud firestore indexes composite create \
+# 作成済み(ALREADY_EXISTS)のみ許容し、それ以外のエラーは失敗させる。
+if ! index_output=$(gcloud firestore indexes composite create \
   --project="${PROJECT_ID}" \
   --database="(default)" \
   --collection-group=scores \
   --field-config=field-path=score,order=descending \
-  --field-config=field-path=date,order=ascending
+  --field-config=field-path=date,order=ascending 2>&1); then
+  if grep -q "ALREADY_EXISTS" <<<"${index_output}"; then
+    echo "複合インデックス(scores: score DESC, date ASC)は既に存在します。スキップします。"
+  else
+    echo "${index_output}" >&2
+    exit 1
+  fi
+fi
 
 # ---------------------------------------------------------------------------
 # 4. GCSバケット作成 + 公開読み取り + CORS + シードデータアップロード
