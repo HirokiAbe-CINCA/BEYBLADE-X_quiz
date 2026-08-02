@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { BEYBLADE_X_BLADES, BEYBLADE_X_QUIZ_ITEMS } from '../src/beyblades.js';
+import { readFileSync } from 'node:fs';
+
 import * as quizEngine from '../src/quizEngine.js';
 import {
   advanceQuestion,
@@ -11,6 +12,12 @@ import {
   getQuizResult,
   timeOutCurrentQuestion,
 } from '../src/quizEngine.js';
+
+// 出題データの正本は data/beyblades.json（旧 src/beyblades.js は廃止）
+const BEYBLADE_X_QUIZ_ITEMS = JSON.parse(
+  readFileSync(new URL('../data/beyblades.json', import.meta.url), 'utf8'),
+).items;
+const BEYBLADE_X_BLADES = BEYBLADE_X_QUIZ_ITEMS.filter((item) => item.type === 'blade');
 
 const streakOptions = {
   optionsPerQuestion: 4,

@@ -1204,3 +1204,167 @@ figcaption {
     transform: translateX(-3px);
   }
 }
+
+/* ---- 起動画面（データ読込中／読込失敗） ---- */
+.boot-screen {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  padding: 48px 20px;
+  text-align: center;
+}
+
+.boot-screen h1 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 1000;
+}
+
+.boot-screen p {
+  margin: 0;
+  color: var(--metal);
+}
+
+.boot-screen .hint {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.boot-screen .primary-action {
+  width: 100%;
+  max-width: 320px;
+}
+
+.boot-spinner {
+  width: 46px;
+  height: 46px;
+  border: 3px solid rgba(210, 230, 250, 0.16);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: bootSpin 900ms linear infinite;
+}
+
+.boot-screen.is-error .boot-spinner {
+  display: none;
+}
+
+@keyframes bootSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- ランキングのタブ切替（ぜんこく / このたんまつ） ---- */
+.leaderboard.has-tabs .leaderboard-head {
+  flex-wrap: wrap;
+}
+
+.ranking-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.ranking-tab {
+  min-height: 30px;
+  padding: 4px 12px;
+  border: 1px solid rgba(210, 230, 250, 0.18);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.24);
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 950;
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+.ranking-tab.is-active {
+  border-color: rgba(103, 234, 255, 0.5);
+  background: linear-gradient(90deg, rgba(103, 234, 255, 0.2), rgba(255, 255, 255, 0.04));
+  color: #ffffff;
+}
+
+.ranking-tab:focus-visible {
+  outline: 3px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+[data-ranking-body] {
+  display: grid;
+  gap: 8px;
+}
+
+.ranking-caption {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+}
+
+.leaderboard.has-tabs ol {
+  max-height: 268px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ranking-status {
+  margin: 0;
+  padding: 14px 8px;
+  border: 1px solid rgba(210, 230, 250, 0.1);
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--metal);
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.ranking-status.is-error {
+  border-color: rgba(255, 75, 98, 0.32);
+  color: var(--red);
+}
+
+/* ---- 全国ランキング送信結果 ---- */
+.global-note {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid rgba(103, 234, 255, 0.28);
+  background: rgba(103, 234, 255, 0.08);
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 950;
+  text-align: center;
+}
+
+.global-note strong {
+  margin: 0 4px;
+  color: var(--cyan);
+  font-size: 1.7rem;
+  font-weight: 1000;
+}
+
+.global-note.is-failed {
+  border-color: rgba(210, 230, 250, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--metal);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+/* ---- 非公式表記 ---- */
+.disclaimer-note {
+  position: relative;
+  z-index: 1;
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.disclaimer-note span {
+  color: rgba(142, 153, 168, 0.72);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+}
