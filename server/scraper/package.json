@@ -1,0 +1,19 @@
+{
+  "name": "beyblade-x-lineup-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BEYBLADE X quiz data auto-updater (Cloud Run Job). Scrapes the official Takara Tomy lineup page and updates beyblades.json on GCS.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.12.0",
+    "cheerio": "^1.0.0"
+  }
+}
