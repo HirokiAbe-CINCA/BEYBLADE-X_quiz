@@ -2,15 +2,14 @@
   "hosting": {
     "public": ".",
     "ignore": [
+      "**/.*",
       "server/**",
       "infra/**",
       "docs/**",
       "test/**",
-      ".github/**",
-      "node_modules/**",
+      "**/node_modules/**",
       "README.md",
       "package.json",
-      ".firebaserc",
       "firebase.json"
     ]
   }

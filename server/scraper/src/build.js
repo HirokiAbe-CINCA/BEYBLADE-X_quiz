@@ -65,7 +65,9 @@ export function buildCandidates(currentItems, entries) {
 
     const cls = classifyEntry(entry);
     if (!cls.beyCandidate) {
-      excluded.push({ code: entry.code, name: entry.name, reason: cls.reason });
+      // hold: true は「除外」ではなく「保留」（判定不能のため人間の確認待ち）
+      const target = cls.hold ? skipped : excluded;
+      target.push({ code: entry.code, name: entry.name, reason: cls.reason });
       continue;
     }
 
@@ -117,8 +119,22 @@ export function buildCandidates(currentItems, entries) {
       existingIds.add(idBase);
     }
 
+    // --- CX系パーツの保留 ---
+    // CX系（およびアシストブレード構成）の詳細ページは商品画像が8枚並びで
+    // alt属性からも内容を特定できず、_03=ラチェット/_04=ビットの画像URL規約が
+    // 成立しない（シードデータにCXのラチェット/ビットが0件なのも同じ理由）。
+    // ブレードのみ自動登録し、ラチェット・ビットは保留して通知に回す。
+    const cxPartsHold = base.line === 'CX' || Boolean(parsed.assist);
+    if (cxPartsHold && (parsed.ratchet || parsed.bit)) {
+      skipped.push({
+        code: entry.code,
+        name: entry.name,
+        reason: `cx-parts-hold: CX系（アシストブレード構成）のためラチェット「${parsed.ratchet ?? '-'}」・ビット「${parsed.bit ?? '-'}」は自動登録しない`,
+      });
+    }
+
     // --- ラチェット（名前でユニーク）---
-    if (parsed.ratchet && !existingRatchetNames.has(parsed.ratchet)) {
+    if (!cxPartsHold && parsed.ratchet && !existingRatchetNames.has(parsed.ratchet)) {
       const id = `${idBase}-ratchet`;
       if (!existingIds.has(id)) {
         candidates.push({
@@ -139,12 +155,21 @@ export function buildCandidates(currentItems, entries) {
       }
     }
 
-    // --- ビット（英字キーでユニーク）---
-    if (parsed.bit && !existingBitKeys.has(parsed.bit)) {
+    // --- ビット（英字キーでユニーク・辞書登録済みのみ自動登録）---
+    if (!cxPartsHold && parsed.bit && !existingBitKeys.has(parsed.bit)) {
+      const { name, inDictionary } = bitDisplayName(parsed.bit);
+      if (!inDictionary) {
+        // 正式名称（読み）が確認できないビットは推測で登録せず保留
+        dictionaryMissing.add(parsed.bit);
+        skipped.push({
+          code: entry.code,
+          name: entry.name,
+          reason: `ビット「${parsed.bit}」は名称辞書に未登録のため保留（src/bits.js への辞書追加待ち）`,
+        });
+        continue;
+      }
       const id = `${idBase}-bit`;
       if (!existingIds.has(id)) {
-        const { name, inDictionary } = bitDisplayName(parsed.bit);
-        if (!inDictionary) dictionaryMissing.add(parsed.bit);
         candidates.push({
           item: {
             id,

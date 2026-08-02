@@ -3,8 +3,11 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 
 import { startServer } from './helpers.js';
 
+// Cloud Run(GFE)はXFF末尾に実クライアントIPを追記するため、末尾要素で数える。
+// 先頭要素はクライアントが偽装可能（IP_A_SPOOFEDは先頭だけ異なる同一クライアント）。
 const IP_A = { 'x-forwarded-for': '203.0.113.10, 130.211.0.1' };
-const IP_B = { 'x-forwarded-for': '203.0.113.99' };
+const IP_A_SPOOFED = { 'x-forwarded-for': '198.51.100.7, 130.211.0.1' };
+const IP_B = { 'x-forwarded-for': '203.0.113.99, 130.211.0.99' };
 
 describe('レート制限（同一IP 10リクエスト/分, POST系のみ）', () => {
   let api;
@@ -31,12 +34,19 @@ describe('レート制限（同一IP 10リクエスト/分, POST系のみ）', (
     assert.ok(Number(blocked.headers.get('retry-after')) > 0);
   });
 
-  it('X-Forwarded-For の先頭IP単位で数える（別IPは影響を受けない）', async () => {
+  it('X-Forwarded-For の末尾IP単位で数える（別IPは影響を受けない）', async () => {
     for (let i = 0; i < 10; i += 1) {
       await api.request('/api/session', { method: 'POST', headers: IP_A });
     }
     assert.equal((await api.request('/api/session', { method: 'POST', headers: IP_A })).status, 429);
     assert.equal((await api.request('/api/session', { method: 'POST', headers: IP_B })).status, 201);
+  });
+
+  it('先頭IPの偽装ではレート制限を回避できない', async () => {
+    for (let i = 0; i < 10; i += 1) {
+      await api.request('/api/session', { method: 'POST', headers: IP_A });
+    }
+    assert.equal((await api.request('/api/session', { method: 'POST', headers: IP_A_SPOOFED })).status, 429);
   });
 
   it('ウィンドウ経過後は再び通る', async () => {

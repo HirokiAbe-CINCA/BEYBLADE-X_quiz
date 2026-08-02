@@ -47,7 +47,12 @@ export function classifyEntry(entry) {
   if (hit) {
     return { beyCandidate: false, reason: `除外キーワード「${hit}」` };
   }
-  if (category && !BEY_CATEGORIES.has(category)) {
+  if (!category) {
+    // カテゴリが取得できないエントリはベイ本体と断定できないため保留
+    // （hold: true は excluded ではなく skipped として通知される）
+    return { beyCandidate: false, hold: true, reason: 'カテゴリ欠落（ベイ本体か判定不能のため保留）' };
+  }
+  if (!BEY_CATEGORIES.has(category)) {
     // 未知のカテゴリも保守的に除外（通知で気付けるようにする）
     return { beyCandidate: false, reason: `カテゴリ「${category}」はベイ本体でない` };
   }

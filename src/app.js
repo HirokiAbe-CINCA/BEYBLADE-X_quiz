@@ -182,7 +182,7 @@ function renderQuestion({ focusNext = false } = {}) {
         </div>
         <div class="blade-image-wrap">
           <span class="x-ring" aria-hidden="true"></span>
-          <img class="blade-image part-${question.answer.type}" src="${question.answer.imageUrl}" alt="ベイブレードXの${escapeHtml(question.answer.partLabel)}画像" data-blade-image>
+          <img class="blade-image part-${question.answer.type}" src="${escapeHtml(question.answer.imageUrl)}" alt="ベイブレードXの${escapeHtml(question.answer.partLabel)}画像" data-blade-image>
           <div class="image-fallback" hidden>
             <ruby>画像<rt aria-hidden="true">がぞう</rt></ruby>を読みこめません
           </div>

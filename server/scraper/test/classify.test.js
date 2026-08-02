@@ -53,6 +53,15 @@ test('【…限定】表記は除外される', () => {
   assert.equal(result.beyCandidate, false);
 });
 
+test('カテゴリ欠落は保留（hold付きで非候補）になる', () => {
+  for (const category of ['', undefined]) {
+    const result = classifyEntry({ code: 'BX-98', name: 'テストソード3-65T', category });
+    assert.equal(result.beyCandidate, false);
+    assert.equal(result.hold, true, 'excludedではなくskippedに回すためのholdフラグ');
+    assert.match(result.reason, /カテゴリ欠落/);
+  }
+});
+
 test('未知カテゴリは保守的に除外される', () => {
   const result = classifyEntry({
     code: 'BX-99',

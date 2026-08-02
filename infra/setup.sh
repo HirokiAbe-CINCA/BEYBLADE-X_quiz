@@ -116,6 +116,15 @@ gcloud firestore fields ttls update expireAt \
   --collection-group=sessions \
   --enable-ttl
 
+# GET /api/ranking の二段ソート(score降順→date昇順)に必要な複合インデックス。
+# 未作成だとランキング取得がFAILED_PRECONDITIONで失敗する。
+gcloud firestore indexes composite create \
+  --project="${PROJECT_ID}" \
+  --database="(default)" \
+  --collection-group=scores \
+  --field-config=field-path=score,order=descending \
+  --field-config=field-path=date,order=ascending
+
 # ---------------------------------------------------------------------------
 # 4. GCSバケット作成 + 公開読み取り + CORS + シードデータアップロード
 # ---------------------------------------------------------------------------

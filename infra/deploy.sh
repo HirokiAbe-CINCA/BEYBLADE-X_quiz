@@ -78,7 +78,7 @@ deploy_api() {
     --region="${REGION}" \
     --source="server/ranking-api" \
     --allow-unauthenticated \
-    --set-env-vars="ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
+    --update-env-vars="ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
 
   local api_url
   api_url="$(gcloud run services describe "${RANKING_API_SERVICE}" \
@@ -100,7 +100,7 @@ deploy_scraper() {
     --region="${REGION}" \
     --source="server/scraper" \
     --service-account="${SCRAPER_SA_EMAIL}" \
-    --set-env-vars="DATA_BUCKET=${BUCKET}"
+    --update-env-vars="DATA_BUCKET=${BUCKET}"
 
   echo ""
   echo "lineup-scraper をデプロイしました。手動実行・DRY_RUN確認方法は infra/README.md を参照してください。"

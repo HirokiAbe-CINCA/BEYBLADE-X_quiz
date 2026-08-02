@@ -7,14 +7,16 @@ const SWEEP_THRESHOLD = 5_000;
 
 /**
  * クライアントIPを取得する。
- * Cloud Run では X-Forwarded-For の先頭がクライアントIP。
+ * Cloud Run(GFE)はクライアント送信のX-Forwarded-Forの「末尾に」実クライアントIPを
+ * 追記するため、末尾要素を採用する。先頭はクライアントが自由に偽装できる。
  * ローカル/直アクセス時は socket のアドレスにフォールバックする。
  */
 export function clientIp(req) {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string') {
-    const first = forwarded.split(',')[0]?.trim();
-    if (first) return first;
+    const parts = forwarded.split(',').map((p) => p.trim()).filter(Boolean);
+    const last = parts[parts.length - 1];
+    if (last) return last;
   }
   return req.socket?.remoteAddress ?? 'unknown';
 }
