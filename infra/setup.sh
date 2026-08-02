@@ -236,6 +236,7 @@ fi
 # ---------------------------------------------------------------------------
 step "[8/9] 予算アラート作成"
 if gcloud billing budgets list --billing-account="${BILLING_ACCOUNT_ID}" \
+    --billing-project="${PROJECT_ID}" \
     --format="value(displayName)" 2>/dev/null | grep -qx "${BUDGET_DISPLAY_NAME}"; then
   echo "予算 ${BUDGET_DISPLAY_NAME} は既に存在します。作成をスキップします。"
   echo "（内容を変更したい場合は Cloud Console から手動編集するか、"
@@ -243,6 +244,7 @@ if gcloud billing budgets list --billing-account="${BILLING_ACCOUNT_ID}" \
 else
   gcloud billing budgets create \
     --billing-account="${BILLING_ACCOUNT_ID}" \
+    --billing-project="${PROJECT_ID}" \
     --display-name="${BUDGET_DISPLAY_NAME}" \
     --budget-amount="${BUDGET_AMOUNT}" \
     --filter-projects="projects/${PROJECT_ID}" \

@@ -78,7 +78,7 @@ deploy_api() {
     --region="${REGION}" \
     --source="server/ranking-api" \
     --allow-unauthenticated \
-    --update-env-vars="ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
+    --update-env-vars="^@^ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
 
   local api_url
   api_url="$(gcloud run services describe "${RANKING_API_SERVICE}" \
